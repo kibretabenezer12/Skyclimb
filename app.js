@@ -6,7 +6,7 @@
    ============================================================ */
 const BACKEND_URL = (function () {
   // >>> REQUIRED when frontend is on GitHub Pages <<<
-  return "https://avaitoret.wisp.uno/";  // no trailing slash
+  return "https://avaitoret.wisp.uno";  // no trailing slash
 
   // Auto: same origin (only when UI is served by the FastAPI process)
   if (typeof location !== "undefined" && location.origin && location.origin !== "null") {
