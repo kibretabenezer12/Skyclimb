@@ -1,0 +1,546 @@
+/* ============================================================
+   Aviator — dark flight-deck UI
+   ============================================================ */
+
+:root {
+  --bg: #0d1117;
+  --panel: #161b22;
+  --panel-2: #1c2128;
+  --border: #30363d;
+  --text: #e6edf3;
+  --muted: #8b949e;
+  --accent: #f85149;          /* red plane / crash */
+  --accent-dim: #da3633;
+  --green: #3fb950;
+  --green-dim: #238636;
+  --gold: #d29922;
+  --blue: #58a6ff;
+  --shadow: rgba(0, 0, 0, 0.45);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  min-height: 100%;
+  background: var(--bg);
+}
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  color: var(--text);
+  background:
+    radial-gradient(ellipse 120% 80% at 50% -20%, #1a2332 0%, var(--bg) 55%);
+  min-height: 100vh;
+  -webkit-tap-highlight-color: transparent;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+}
+
+#app {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 12px 12px 28px;
+  position: relative;
+}
+
+/* ---------- Top bar ---------- */
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 14px;
+  box-shadow: 0 2px 8px var(--shadow);
+}
+
+.brand { display: flex; align-items: center; gap: 8px; }
+.brand-plane {
+  color: var(--accent);
+  font-size: 22px;
+  display: inline-block;
+  transform: rotate(-25deg);
+}
+.brand-name {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.wallet { display: flex; align-items: center; gap: 8px; }
+
+.mode-toggle {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: #0d1117;
+  background: linear-gradient(180deg, #f0c14b, var(--gold));
+  border: none;
+  border-radius: 6px;
+  padding: 6px 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+.mode-toggle[data-mode="demo"] {
+  background: linear-gradient(180deg, #6e7681, #484f58);
+  color: var(--text);
+}
+
+.balance-plate {
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.balance-value {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 600;
+  font-size: 16px;
+  color: var(--green);
+}
+.balance-unit { font-size: 11px; color: var(--muted); }
+
+/* ---------- Crash history pills ---------- */
+
+.history-bar {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  overflow-x: auto;
+  padding: 10px 0 6px;
+  scrollbar-width: none;
+}
+.history-bar::-webkit-scrollbar { display: none; }
+
+.hist-pill {
+  flex-shrink: 0;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: var(--panel-2);
+  border: 1px solid var(--border);
+  color: var(--muted);
+}
+.hist-pill.low { color: var(--accent); border-color: #5c1a1a; background: #2a1215; }
+.hist-pill.mid { color: var(--gold); border-color: #5c4a1a; background: #2a2312; }
+.hist-pill.high { color: var(--green); border-color: #1a5c2a; background: #122a18; }
+
+/* ---------- Flight stage ---------- */
+
+.flight-stage {
+  position: relative;
+  background: linear-gradient(180deg, #0a1628 0%, #0d1f35 40%, #071018 100%);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  height: 280px;
+  margin-bottom: 12px;
+  box-shadow: inset 0 0 60px rgba(0, 40, 80, 0.3);
+}
+
+#flightCanvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.multiplier-display {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  pointer-events: none;
+  z-index: 5;
+  transition: opacity 0.2s;
+}
+.multiplier-display #multValue {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 800;
+  font-weight: 700;
+  font-size: 56.0px;
+  color: #fff;
+  text-shadow: 0 0 24px rgba(88, 166, 255, 0.5), 0 2px 8px rgba(0,0,0,0.6);
+  letter-spacing: -0.02em;
+}
+.multiplier-display .x {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 28px;
+  color: var(--blue);
+  margin-left: 2px;
+}
+.multiplier-display.crashed #multValue {
+  color: var(--accent);
+  text-shadow: 0 0 28px rgba(248, 81, 73, 0.6);
+}
+.multiplier-display.crashed .x { color: var(--accent-dim); }
+
+.status-overlay {
+  position: absolute;
+  bottom: 12px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  z-index: 4;
+  pointer-events: none;
+}
+.status-overlay.status-error {
+  color: #f85149;
+  font-weight: 700;
+}
+
+.crash-banner {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  text-align: center;
+  z-index: 6;
+  animation: crashPop 0.35s ease-out;
+}
+.crash-banner.hidden { display: none; }
+.crash-banner #crashText {
+  display: block;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 22px;
+  color: var(--accent);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 20px rgba(248, 81, 73, 0.5);
+}
+.crash-banner #crashMult {
+  display: block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  color: var(--muted);
+  margin-top: 4px;
+}
+
+@keyframes crashPop {
+  0% { opacity: 0; transform: translateX(-50%) scale(0.7); }
+  100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+/* ---------- Terminals / bets ---------- */
+
+.terminals {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.terminal {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.terminal-label {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--muted);
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.stake-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.stake-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.stake-btn:active { background: #2d333b; }
+
+.stake-input {
+  flex: 1;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: center;
+  -moz-appearance: textfield;
+}
+.stake-input::-webkit-outer-spin-button,
+.stake-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+
+.quick-stakes {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+.quick-stakes button {
+  flex: 1;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-2);
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.quick-stakes button:active { color: var(--text); background: #2d333b; }
+
+.action-btn {
+  width: 100%;
+  height: 44px;
+  border: none;
+  border-radius: 10px;
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  transition: background 0.15s, transform 0.1s;
+}
+.action-btn:active { transform: scale(0.97); }
+
+.action-btn.bet {
+  background: linear-gradient(180deg, #3fb950, #238636);
+  color: #fff;
+  box-shadow: 0 3px 0 #1a5c2a;
+}
+.action-btn.cashout {
+  background: linear-gradient(180deg, #f0c14b, #d29922);
+  color: #0d1117;
+  box-shadow: 0 3px 0 #8b6914;
+  animation: pulseCash 1.2s ease-in-out infinite;
+}
+.action-btn.staked {
+  background: var(--panel-2);
+  color: var(--muted);
+  box-shadow: none;
+  cursor: default;
+}
+.action-btn.won {
+  background: linear-gradient(180deg, #3fb950, #238636);
+  color: #fff;
+  box-shadow: none;
+  cursor: default;
+}
+.action-btn.lost {
+  background: linear-gradient(180deg, #f85149, #da3633);
+  color: #fff;
+  box-shadow: none;
+  cursor: default;
+}
+.action-btn.waiting-next {
+  background: linear-gradient(180deg, #f85149, #9e1c1c);
+  color: #fff;
+  box-shadow: none;
+  cursor: default;
+  font-size: 11px;
+  letter-spacing: 0.04em;
+}
+.action-btn:disabled { opacity: 0.85; cursor: default; }
+
+.terminal-result.pending { color: #f85149; font-weight: 600; }
+.terminal-result.insufficient { color: #f85149; font-weight: 700; }
+.log-row .payout.bet { color: #58a6ff; font-weight: 600; }
+
+@keyframes pulseCash {
+  0%, 100% { box-shadow: 0 3px 0 #8b6914, 0 0 0 0 rgba(210, 153, 34, 0.4); }
+  50% { box-shadow: 0 3px 0 #8b6914, 0 0 12px 4px rgba(210, 153, 34, 0.25); }
+}
+
+.terminal-result {
+  margin-top: 8px;
+  font-size: 12px;
+  text-align: center;
+  min-height: 16px;
+  color: var(--muted);
+}
+.terminal-result.win { color: var(--green); font-weight: 600; }
+.terminal-result.loss { color: var(--accent); }
+.terminal-result.early { color: var(--gold); }
+
+/* ---------- Tabs ---------- */
+
+.tabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
+  background: var(--panel);
+  border-radius: 10px;
+  padding: 4px;
+  border: 1px solid var(--border);
+}
+.tab {
+  flex: 1;
+  height: 34px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tab.active {
+  background: var(--panel-2);
+  color: var(--text);
+}
+
+.tab-panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  min-height: 120px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.tab-panel.hidden { display: none; }
+
+.tab-panel p {
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--muted);
+  margin: 0 0 10px;
+}
+.tab-panel p strong { color: var(--text); }
+.tab-panel .formula { margin-top: 8px; }
+.tab-panel code {
+  font-family: 'Orbitron', monospace;
+  font-size: 12px;
+  color: var(--blue);
+  background: var(--bg);
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.daily-note { font-size: 12px !important; color: var(--gold) !important; }
+
+.log-list, .board-list { display: flex; flex-direction: column; gap: 6px; }
+.empty { color: var(--muted); font-size: 13px; text-align: center; margin: 20px 0; }
+
+.log-row, .board-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 8px;
+  background: var(--panel-2);
+  border-radius: 8px;
+  font-size: 12px;
+}
+.log-row .name, .board-row .name { font-weight: 600; color: var(--text); }
+.log-row .meta { color: var(--muted); }
+.log-row .payout.win { color: var(--green); font-weight: 600; }
+.log-row .payout.loss { color: var(--accent); }
+.log-row .payout.early { color: var(--gold); }
+
+.board-row .rank { color: var(--muted); width: 28px; }
+.board-row .won { color: var(--green); font-weight: 600; font-family: 'Orbitron', sans-serif; font-size: 12px; }
+
+/* ---------- Sound toggle ---------- */
+
+.sound-toggle {
+  position: fixed;
+  bottom: 16px;
+  right: 16px;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--panel);
+  color: var(--text);
+  font-size: 18px;
+  cursor: pointer;
+  box-shadow: 0 2px 10px var(--shadow);
+  z-index: 20;
+}
+.sound-toggle.muted { opacity: 0.5; }
+
+
+/* Locked when not opened from Telegram */
+#app.locked .terminals,
+#app.locked .tabs,
+#app.locked .flight-stage {
+  opacity: 0.45;
+  pointer-events: none;
+}
+#app.locked .status-overlay {
+  color: #f85149;
+  font-weight: 700;
+}
+
+.terminal-result.cashout-live { color: #3fb950; font-weight: 700; }
+
+.status-overlay.countdown-pulse {
+  transform-origin: center center;
+  transition: transform 0.05s linear, opacity 0.05s linear;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #ffd666;
+  text-shadow: 0 0 18px rgba(255, 180, 40, 0.45);
+}
+.multiplier-display #multValue {
+  font-weight: 800 !important;
+  -webkit-text-stroke: 0.4px rgba(255,255,255,0.15);
+  letter-spacing: 0.02em;
+}
+
+/* Next-round decreasing line (Spribe-style) */
+.wait-bar-wrap {
+  position: absolute;
+  left: 22%;
+  right: 22%;
+  bottom: 42px;
+  height: 7px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  overflow: hidden;
+  z-index: 6;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+.wait-bar-wrap.active {
+  opacity: 1;
+}
+.wait-bar {
+  height: 100%;
+  width: 100%;
+  transform-origin: left center;
+  transform: scaleX(1);
+  background: linear-gradient(90deg, #ff1a1a, #ff4444);
+  border-radius: 4px;
+  box-shadow: 0 0 10px rgba(255, 40, 40, 0.55);
+  will-change: transform;
+}
